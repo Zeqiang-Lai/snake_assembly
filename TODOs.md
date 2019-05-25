@@ -17,7 +17,7 @@ not completely listed.
 
 - [x] basic
 - [x] check eat food
-- [ ] check wall(when set solid wall)
+- [x] check wall
 - [x] check eat itself
 - [x] speed control
 
@@ -29,7 +29,8 @@ not completely listed.
 
 ### Map
 
-
+- [x] create a map image
+- [x] convert bit png to map
+- [x] hit test
 
 ### Color
-
