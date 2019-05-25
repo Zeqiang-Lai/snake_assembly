@@ -4,11 +4,11 @@ option casemap:none
 
 include		masm32rt.inc
 
-INFO_ORIGIN_X	EQU 53
+INFO_ORIGIN_X	EQU 85
 INFO_ORIGIN_Y	EQU 0
 
-WALL_MAX_X	EQU	50
-WALL_MAX_Y	EQU 20
+WALL_MAX_X	EQU	80
+WALL_MAX_Y	EQU 29
 
 MAX_LEN		EQU 100		; max length of snake
 
@@ -455,24 +455,26 @@ show_main_screen	endp
 
 show_game_over_screen proc
 	cls
-	invoke locate, 30, 15
-	print "Game over", 13, 10
+	invoke locate, 56, 11
+	print "GAME OVER", 13, 10
+	invoke locate, 48, 12
+	print "PRESS ANY KEY TO RESTART", 13, 10
 	ret
 show_game_over_screen endp
 
 show_game_quit_screen proc
-	invoke locate, 30, 10
+	invoke locate, 45, 10
 	print "Are you sure you want to quit?", 13, 10
-	invoke locate, 35, 11
+	invoke locate, 53, 11
 	print "Yes(y), No(n)", 13, 10
 	ret
 show_game_quit_screen endp
 
 show_welcome_screen	proc
-	invoke locate, 36, 10
-	print "Snake Game", 13, 10
-	invoke locate, 30, 11
-	print "Press any key to start.", 13, 10
+	invoke locate, 55, 11
+	print "SNAKE GAME", 13, 10
+	invoke locate, 49, 12
+	print "PRESS ANY KEY TO START", 13, 10
 	ret
 show_welcome_screen	endp
 
