@@ -6,7 +6,7 @@ include		masm32rt.inc
 
 WALL_MAX_X	EQU	50
 WALL_MAX_Y	EQU 20
-MAX_LEN		EQU 30
+MAX_LEN		EQU 100		; max length of snake
 
 DEFAULT_SPEED		EQU 120
 DEFAULT_DIR			EQU 'd'
@@ -47,6 +47,8 @@ speed		dd	DEFAULT_SPEED	; speed of snake, one move in 'speed' ms.
 
 game_over	db	FALSE
 game_pause	db	FALSE
+
+msg_game_over	byte	"Game over", 0
 
 key			dd	?				; store the current pressed key.
 hOutPut DWORD ?
@@ -132,6 +134,13 @@ draw_food	proc
 	invoke print_food
 	ret
 draw_food	endp
+
+draw_game_over_screen proc
+	cls
+	invoke locate, 30, 15
+	print "Game over", 13, 10
+	ret
+draw_game_over_screen endp
 
 clear_snake proc
 	push edx
@@ -363,10 +372,15 @@ true:
 	ret
 change_dir	endp
 
+quit_game	proc
+
+quit_game	endp
+
 on_key_pressed	proc
 ; regconize which type of key is pressed. 
 ; then execute corrsponding route.
 ; 1. Change direction -- w,a,s,d
+
 	cmp key, UP
 	je	on_dir
 	cmp key, LEFT
@@ -386,8 +400,14 @@ other:
 on_key_pressed	endp
 
 refresh_ui	proc
+	cmp game_over, TRUE
+	je state_over
 	invoke draw_snake
 	invoke draw_food
+	jmp done
+state_over:
+	invoke draw_game_over_screen
+done:
 	ret
 refresh_ui	endp
 
@@ -396,6 +416,33 @@ check_game_over	proc
 ; 1. snake eat itself
 ; 2. hit the wall(if the wall is solid)
 ; 3. eat the bad food(future work)[optional]
+	
+	local head:dword
+	pusha
+
+	mov edx, snake_len
+	mov head, edx
+	dec head
+
+	; check did snake eat itself?
+	mov edi, offset snake_x
+	mov esi, offset snake_y	
+
+	xor ecx, ecx
+L1:
+	mov edx, [edi + ecx*4]
+	cmp edx, next_head_x
+	jne L1_INC
+	mov edx, [esi + ecx*4]
+	cmp edx, next_head_y
+	jne L1_INC
+	mov game_over, TRUE
+	jmp L1_BREAK
+L1_INC:
+	inc ecx
+	cmp ecx, head
+	jne L1
+L1_BREAK:
 
 	ret
 check_game_over	endp
@@ -404,13 +451,20 @@ start_game	proc
 	game_loop:
 		invoke crt__kbhit
 		test eax, eax
-		jz move				; no key input, automove
+		jz no_key_input		; no key input
+		jmp input_key
+	no_key_input:
+		cmp game_over, TRUE
+		jne move
+		jmp game_loop
 
+	input_key:
 		mov eax, dir		; store last direction
 		mov last_dir, eax
 		invoke crt__getch
 		mov key, eax
 		invoke on_key_pressed
+
 	move:
 		invoke compute_next_head
 		invoke check_game_over

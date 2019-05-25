@@ -13,7 +13,7 @@
 - [x] basic
 - [x] check eat food
 - [ ] check wall(when set solid wall)
-- [ ] check eat itself
+- [x] check eat itself
 
 ### Food
 
