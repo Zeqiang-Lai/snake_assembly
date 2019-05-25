@@ -50,8 +50,12 @@ formatD			byte	"%d", 0
 
 ; map
 game_map		db	WALL_MAX_X*WALL_MAX_Y dup(0)
-map_x_size		db	WALL_MAX_X
-map_y_size		db  WALL_MAX_Y
+map_x_size		dd	WALL_MAX_X
+map_y_size		dd  WALL_MAX_Y
+
+welcome_map		db  120*29 dup(0)
+welcome_x_size	dd	120
+welcome_y_size	dd	29
 
 ; model
 snake_x			dd	MAX_LEN dup(0)
@@ -77,9 +81,10 @@ game_pause	db	FALSE
 game_quit	db	FALSE
 
 ; system
-map_file	DWORD	?
-map_path	byte	"map1.txt", 0
-read_mode	byte	"rb", 0
+map_file		DWORD	?
+game_map_path		byte	"map1.txt", 0
+welcome_map_path	byte	"welcome.txt", 0
+read_mode		byte	"rb", 0
 
 key			dd		?				; store the current pressed key.
 hOutPut		DWORD	?
@@ -181,14 +186,14 @@ draw_info_panel	proc
 	ret
 draw_info_panel endp
 
-draw_map	proc
-	mov ebx, offset game_map
+draw_map	proc	map_array:DWORD, size_x:DWORD, size_y:DWORD
+	mov ebx, map_array
 	xor esi, esi
 outer_loop:
 	xor edi, edi
 inner_loop:
 	mov eax, esi
-	mul map_x_size
+	mul size_x
 	add eax, ebx
 	add eax, edi
 	mov dl, [eax]
@@ -198,17 +203,28 @@ inner_loop:
 	invoke print_wall
 l1:
 	inc edi
-	movzx eax, map_x_size
+	mov eax, size_x
 	cmp edi, eax
 	jne inner_loop
 end_inner:
 	inc esi
-	movzx eax, map_y_size
+	mov eax, size_y
 	cmp esi, eax
 	jne outer_loop
 end_outer:
 	ret
 draw_map	endp
+
+read_map_from_file	proc map_path:DWORD, map_array:DWORD, size_x:DWORD, size_y:DWORD
+	pusha
+	invoke crt_fopen, map_path, offset read_mode
+	mov map_file, eax
+	mov eax, size_x
+	mul size_y
+	invoke crt_fread, map_array, 1, eax, map_file
+	popa
+	ret
+read_map_from_file	endp
 
 wall_hit_test	proc
 ; check will next head hit the wall.
@@ -480,7 +496,7 @@ true:
 change_dir	endp
 
 show_main_screen	proc
-	invoke draw_map
+	invoke draw_map, offset game_map, map_x_size, map_y_size
 	invoke draw_snake
 	invoke draw_info_panel
 	invoke draw_score
@@ -505,9 +521,12 @@ show_game_quit_screen proc
 show_game_quit_screen endp
 
 show_welcome_screen	proc
-	invoke locate, 55, 11
-	print "SNAKE GAME", 13, 10
-	invoke locate, 49, 12
+	invoke read_map_from_file, offset welcome_map_path, offset welcome_map, welcome_x_size, welcome_y_size
+	invoke draw_map, offset welcome_map, welcome_x_size, welcome_y_size
+	;invoke locate, 55, 11
+	;print "SNAKE GAME", 13, 10
+
+	invoke locate, 49, 18
 	print "PRESS ANY KEY TO START", 13, 10
 	ret
 show_welcome_screen	endp
@@ -699,21 +718,12 @@ l_done:
 	ret
 launch_welcome	endp
 
-read_map_from_file	proc
-	pusha
-	invoke crt_fopen, offset map_path, offset read_mode
-	mov map_file, eax
-	invoke crt_fread, offset game_map, 1, WALL_MAX_Y*WALL_MAX_X, map_file
-	popa
-	ret
-read_map_from_file	endp
-
 main proc
 	invoke init_console
 	invoke launch_welcome
 	cmp game_quit, TRUE
 	je  try_quit
-	invoke read_map_from_file
+	invoke read_map_from_file, offset game_map_path, offset game_map, WALL_MAX_X, WALL_MAX_Y
 main_loop:
 	invoke launch_game
 	cmp game_over, TRUE
