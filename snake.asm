@@ -22,6 +22,8 @@ LEFT	EQU	'a'
 RIGHT	EQU	'd'		
 KPAUSE	EQU	' '
 KESC	EQU 27
+KYES	EQU 'y'
+KNO		EQU	'n'
 
 .data
 b_wall			byte	'#'
@@ -157,6 +159,7 @@ compute_food_loc endp
 
 init_console	proc
 	pusha
+	SetConsoleCaption "Snake"
 	invoke GetStdHandle, STD_OUTPUT_HANDLE
 	mov hOutPut, eax
 	;Turn off the cursor
@@ -378,14 +381,55 @@ true:
 	ret
 change_dir	endp
 
-quit_game	proc
+show_main_screen	proc
+	invoke draw_wall
+	invoke draw_snake
+	ret
+show_main_screen	endp
 
-quit_game	endp
+show_game_over_screen proc
+	cls
+	invoke locate, 30, 15
+	print "Game over", 13, 10
+	ret
+show_game_over_screen endp
+
+show_game_quit_screen proc
+	invoke locate, 30, 10
+	print "Are you sure you want to quit?", 13, 10
+	invoke locate, 35, 11
+	print "Yes(y), No(n)", 13, 10
+	ret
+show_game_quit_screen endp
+
+launch_game_quit proc
+; used for main screen, to prevent unexpected quit.
+	cls
+	invoke show_game_quit_screen
+	invoke crt__getch
+	mov key, eax
+	cmp key, KYES
+	je yes_quit
+	cmp key, KNO
+	je resume_game
+yes_quit:
+	mov game_quit, TRUE
+	jmp done
+resume_game:
+	cls
+	invoke show_main_screen
+done:
+	ret
+launch_game_quit endp
 
 on_key_pressed	proc
+; Notice: this procedure is only used by **main screen**
 ; regconize which type of key is pressed. 
 ; then execute corrsponding route.
-; 1. Change direction -- w,a,s,d
+; 1. Change direction	-- w,a,s,d
+; 2. Quit the game		-- ESC
+; 3. Pause the game		-- space
+; 4. Do nothing			-- any other key
 	cmp key, UP
 	je	on_dir
 	cmp key, LEFT
@@ -394,11 +438,16 @@ on_key_pressed	proc
 	je	on_dir
 	cmp key, RIGHT
 	je	on_dir
+	cmp key, KESC
+	je on_quit
+	jmp other
 on_dir:
 	mov eax, key
 	mov dir, eax
 	invoke change_dir
 	jmp other
+on_quit:
+	invoke launch_game_quit
 other:
 	;do nothing
 	ret
@@ -458,6 +507,8 @@ start_game	proc
 		invoke crt__getch
 		mov key, eax
 		invoke on_key_pressed
+		cmp game_quit, TRUE
+		je end_game
 
 	move:
 		invoke compute_next_head
@@ -476,19 +527,6 @@ start_game	proc
 end_game:
 	ret
 start_game endp
-
-show_main_screen	proc
-	invoke draw_wall
-	invoke draw_snake
-	ret
-show_main_screen	endp
-
-show_game_over_screen proc
-	cls
-	invoke locate, 30, 15
-	print "Game over", 13, 10
-	ret
-show_game_over_screen endp
 
 launch_game	proc
 	cls
@@ -510,6 +548,7 @@ launch_game_over	proc
 	invoke crt__getch
 	mov key, eax
 	cmp key, KESC
+
 	; nothing need to be done here to restart the game
 	jne l_done			
 	mov game_quit, TRUE

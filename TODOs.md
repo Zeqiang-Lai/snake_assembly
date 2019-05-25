@@ -1,5 +1,7 @@
 # TODOs
 
+not completely listed.
+
 ### UI
 
 - [x] draw wall
@@ -20,3 +22,10 @@
 - [x] basic
 - [ ] randomly generate
 - [ ] score system
+
+### Map
+
+
+
+### Color
+
