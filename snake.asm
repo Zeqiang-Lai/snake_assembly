@@ -448,6 +448,14 @@ show_game_quit_screen proc
 	ret
 show_game_quit_screen endp
 
+show_welcome_screen	proc
+	invoke locate, 36, 10
+	print "Snake Game", 13, 10
+	invoke locate, 30, 11
+	print "Press any key to start.", 13, 10
+	ret
+show_welcome_screen	endp
+
 launch_game_quit proc
 ; used for main screen, to prevent unexpected quit.
 	cls
@@ -603,8 +611,22 @@ l_done:
 	ret
 launch_game_over	endp
 
+launch_welcome	proc
+	invoke show_welcome_screen
+	invoke crt__getch
+	mov key, eax
+	cmp key, KESC
+	jne l_done			
+	mov game_quit, TRUE
+l_done:
+	ret
+launch_welcome	endp
+
 main proc
 	invoke init_console
+	invoke launch_welcome
+	cmp game_quit, TRUE
+	je  try_quit
 main_loop:
 	invoke launch_game
 	cmp game_over, TRUE
