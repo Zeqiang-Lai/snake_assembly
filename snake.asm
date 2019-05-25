@@ -107,35 +107,6 @@ print_food	proc
 	ret
 print_food	endp
 
-draw_wall	proc
-	pusha
-	mov ecx, WALL_MAX_X
-draw_top_bottom:
-	push ecx
-	invoke locate, ecx, 0
-	pop ecx
-	invoke print_wall
-	push ecx
-	invoke locate, ecx, WALL_MAX_Y
-	pop ecx
-	invoke print_wall
-loop draw_top_bottom
-
-	mov ecx, WALL_MAX_Y
-draw_left_right:
-	push ecx
-	invoke locate, 0, ecx
-	pop ecx
-	invoke print_wall
-	push ecx
-	invoke locate, WALL_MAX_X, ecx
-	pop ecx
-	invoke print_wall
-loop draw_left_right
-	popa
-	ret
-draw_wall	endp
-
 draw_snake	proc
 	local tmp_x, tmp_y:dword
 	pusha
@@ -509,7 +480,6 @@ true:
 change_dir	endp
 
 show_main_screen	proc
-	;invoke draw_wall
 	invoke draw_map
 	invoke draw_snake
 	invoke draw_info_panel
