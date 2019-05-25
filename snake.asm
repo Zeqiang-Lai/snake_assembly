@@ -4,14 +4,20 @@ option casemap:none
 
 include		masm32rt.inc
 
+INFO_ORIGIN_X	EQU 53
+INFO_ORIGIN_Y	EQU 0
+
 WALL_MAX_X	EQU	50
 WALL_MAX_Y	EQU 20
+
 MAX_LEN		EQU 100		; max length of snake
 
 DEFAULT_SPEED		EQU 120
 DEFAULT_DIR			EQU 'd'
 DEFAULT_LAST_DIR	EQU 's'
 DEFAULT_LEN			EQU 3
+DEFAULT_FOOD_X		EQU	5
+DEFAULT_FOOD_Y		EQU	14
 
 TRUE	EQU	1
 FALSE	EQU 0
@@ -26,12 +32,17 @@ KYES	EQU 'y'
 KNO		EQU	'n'
 
 .data
+; UI
 b_wall			byte	'#'
 b_snake			byte	'*'
 b_snake_empty	byte	' '
 b_snake_real	byte	'*'
 b_food			byte	'$'
 
+msg_game_over	byte	"Game over", 0
+formatD			byte	"%d", 0
+
+; model
 snake_x			dd	MAX_LEN dup(0)
 snake_y			dd	MAX_LEN dup(0)
 snake_len		dd	DEFAULT_LEN	; length of snake.
@@ -41,8 +52,10 @@ snake_y_init	dd	3,3,3
 next_head_x		dd	?	
 next_head_y		dd	?	
 
-food_x	dd	1
-food_y	dd	14
+food_x	dd	DEFAULT_FOOD_X
+food_y	dd	DEFAULT_FOOD_Y
+
+score	dd	0
 
 dir			dd	DEFAULT_DIR		; direction, key pressed(WASD).
 last_dir	dd	DEFAULT_LAST_DIR
@@ -52,8 +65,7 @@ game_over	db	FALSE
 game_pause	db	FALSE
 game_quit	db	FALSE
 
-msg_game_over	byte	"Game over", 0
-
+; system
 key			dd	?				; store the current pressed key.
 hOutPut DWORD ?
 CCI CONSOLE_CURSOR_INFO {}
@@ -139,6 +151,36 @@ draw_food	proc
 	ret
 draw_food	endp
 
+draw_score	proc
+; we seperate this procedure from draw_info_panel
+; to get better performance.
+; this procedure will be called from refresh_ui as well.
+	invoke locate, INFO_ORIGIN_X+20, INFO_ORIGIN_Y+5
+	invoke crt_printf, offset formatD, score
+	ret
+draw_score	endp
+
+draw_info_panel	proc
+	pusha
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y
+	print "SNAKE", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+5
+	print "Current Score: ", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+6
+	print "Target  Score: ", 13, 10
+
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+15
+	print "Control: ", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+16
+	print "ESC:     quit the game", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+17
+	print "Space:  pause the game", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+18
+	print "wasd: movement control", 13, 10
+	popa
+	ret
+draw_info_panel endp
+
 clear_snake proc
 	push edx
 	mov dl, b_snake_empty
@@ -209,6 +251,7 @@ init_setting proc
 	mov speed,		DEFAULT_SPEED
 	mov game_over,	FALSE
 	mov game_pause,	FALSE
+	mov score,		0
 	ret
 init_setting endp
 
@@ -333,6 +376,7 @@ ate:
 	inc ecx
 	mov snake_len, ecx
 
+	inc score
 	; genreate new food
 	invoke compute_food_loc
 
@@ -384,6 +428,8 @@ change_dir	endp
 show_main_screen	proc
 	invoke draw_wall
 	invoke draw_snake
+	invoke draw_info_panel
+	invoke draw_score
 	ret
 show_main_screen	endp
 
@@ -456,6 +502,7 @@ on_key_pressed	endp
 refresh_ui	proc
 	invoke draw_snake
 	invoke draw_food
+	invoke draw_score
 	ret
 refresh_ui	endp
 
