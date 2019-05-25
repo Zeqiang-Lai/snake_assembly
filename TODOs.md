@@ -6,9 +6,12 @@ not completely listed.
 
 - [x] draw wall
 - [x] draw snake
-- [ ] welcome screen
-- [ ] game_over screen
+- [ ] welcome screen 
+  - [x] basic
+- [ ] game_over screen 
+  - [x] basic
 - [ ] info panel
+  - [x] basic
 
 ### Move
 
@@ -16,12 +19,13 @@ not completely listed.
 - [x] check eat food
 - [ ] check wall(when set solid wall)
 - [x] check eat itself
+- [x] speed control
 
 ### Food
 
 - [x] basic
 - [ ] randomly generate
-- [ ] score system
+- [x] score system
 
 ### Map
 
