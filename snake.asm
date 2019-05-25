@@ -21,6 +21,7 @@ DOWN	EQU	's'
 LEFT	EQU	'a'		
 RIGHT	EQU	'd'		
 KPAUSE	EQU	' '
+KESC	EQU 27
 
 .data
 b_wall			byte	'#'
@@ -47,6 +48,7 @@ speed		dd	DEFAULT_SPEED	; speed of snake, one move in 'speed' ms.
 
 game_over	db	FALSE
 game_pause	db	FALSE
+game_quit	db	FALSE
 
 msg_game_over	byte	"Game over", 0
 
@@ -135,13 +137,6 @@ draw_food	proc
 	ret
 draw_food	endp
 
-draw_game_over_screen proc
-	cls
-	invoke locate, 30, 15
-	print "Game over", 13, 10
-	ret
-draw_game_over_screen endp
-
 clear_snake proc
 	push edx
 	mov dl, b_snake_empty
@@ -174,6 +169,8 @@ init_console	endp
 
 init_snake proc
 	pusha
+	mov snake_len, DEFAULT_LEN
+
 	mov edi, offset snake_x
 	mov esi, offset snake_x_init
 	xor ecx, ecx
@@ -202,6 +199,15 @@ init_food	proc
 	invoke compute_food_loc
 	invoke draw_food
 init_food	endp
+
+init_setting proc
+	mov dir,		DEFAULT_DIR
+	mov last_dir,	DEFAULT_LAST_DIR
+	mov speed,		DEFAULT_SPEED
+	mov game_over,	FALSE
+	mov game_pause,	FALSE
+	ret
+init_setting endp
 
 compute_next_head proc
 	local head:dword
@@ -380,7 +386,6 @@ on_key_pressed	proc
 ; regconize which type of key is pressed. 
 ; then execute corrsponding route.
 ; 1. Change direction -- w,a,s,d
-
 	cmp key, UP
 	je	on_dir
 	cmp key, LEFT
@@ -400,14 +405,8 @@ other:
 on_key_pressed	endp
 
 refresh_ui	proc
-	cmp game_over, TRUE
-	je state_over
 	invoke draw_snake
 	invoke draw_food
-	jmp done
-state_over:
-	invoke draw_game_over_screen
-done:
 	ret
 refresh_ui	endp
 
@@ -451,12 +450,7 @@ start_game	proc
 	game_loop:
 		invoke crt__kbhit
 		test eax, eax
-		jz no_key_input		; no key input
-		jmp input_key
-	no_key_input:
-		cmp game_over, TRUE
-		jne move
-		jmp game_loop
+		jz move
 
 	input_key:
 		mov eax, dir		; store last direction
@@ -467,9 +461,11 @@ start_game	proc
 
 	move:
 		invoke compute_next_head
+
 		invoke check_game_over
 		cmp game_over, TRUE
-		je update_ui
+		je end_game		
+
 		invoke clear_snake
 		invoke compute_next_loc
 
@@ -477,16 +473,60 @@ start_game	proc
 		invoke refresh_ui
 		invoke Sleep, speed
 	jmp game_loop
+end_game:
 	ret
 start_game endp
 
-main proc
-	invoke init_console
-	invoke init_snake
-	invoke init_food
+show_main_screen	proc
 	invoke draw_wall
 	invoke draw_snake
+	ret
+show_main_screen	endp
+
+show_game_over_screen proc
+	cls
+	invoke locate, 30, 15
+	print "Game over", 13, 10
+	ret
+show_game_over_screen endp
+
+launch_game	proc
+	cls
+	invoke init_setting
+	invoke init_snake
+	invoke init_food
+	invoke show_main_screen
 	invoke start_game
+	ret
+launch_game endp
+
+launch_game_over	proc
+	invoke show_game_over_screen
+
+	; wait for user input
+	; 1.	   ESC:		quit the game
+	; 2. Any other:		restart
+
+	invoke crt__getch
+	mov key, eax
+	cmp key, KESC
+	; nothing need to be done here to restart the game
+	jne l_done			
+	mov game_quit, TRUE
+l_done:
+	ret
+launch_game_over	endp
+
+main proc
+	invoke init_console
+main_loop:
+	invoke launch_game
+	cmp game_over, TRUE
+	jne try_quit
+	invoke launch_game_over
+try_quit:
+	cmp game_quit, TRUE
+	jne main_loop
 	ret
 main endp
 end main
