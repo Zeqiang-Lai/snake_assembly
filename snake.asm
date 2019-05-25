@@ -15,8 +15,8 @@ MAX_LEN		EQU 100		; max length of snake
 DEFAULT_DIR			EQU 'd'
 DEFAULT_LAST_DIR	EQU 's'
 DEFAULT_LEN			EQU 3
-DEFAULT_FOOD_X		EQU	5
-DEFAULT_FOOD_Y		EQU	14
+DEFAULT_FOOD_X		EQU	20
+DEFAULT_FOOD_Y		EQU	3
 
 DEFAULT_SPEED		EQU 125
 FASTEST_SPEED		EQU 25
@@ -48,6 +48,11 @@ b_food			byte	'$'
 msg_game_over	byte	"Game over", 0
 formatD			byte	"%d", 0
 
+; map
+game_map		db	WALL_MAX_X*WALL_MAX_Y dup(0)
+map_x_size		db	WALL_MAX_X
+map_y_size		db  WALL_MAX_Y
+
 ; model
 snake_x			dd	MAX_LEN dup(0)
 snake_y			dd	MAX_LEN dup(0)
@@ -72,8 +77,12 @@ game_pause	db	FALSE
 game_quit	db	FALSE
 
 ; system
-key			dd	?				; store the current pressed key.
-hOutPut DWORD ?
+map_file	DWORD	?
+map_path	byte	"map1.txt", 0
+read_mode	byte	"rb", 0
+
+key			dd		?				; store the current pressed key.
+hOutPut		DWORD	?
 CCI CONSOLE_CURSOR_INFO {}
 
 .code
@@ -200,6 +209,60 @@ draw_info_panel	proc
 	popa
 	ret
 draw_info_panel endp
+
+draw_map	proc
+	mov ebx, offset game_map
+	xor esi, esi
+outer_loop:
+	xor edi, edi
+inner_loop:
+	mov eax, esi
+	mul map_x_size
+	add eax, ebx
+	add eax, edi
+	mov dl, [eax]
+	cmp dl, 1
+	jne l1
+	invoke locate, edi, esi
+	invoke print_wall
+l1:
+	inc edi
+	movzx eax, map_x_size
+	cmp edi, eax
+	jne inner_loop
+end_inner:
+	inc esi
+	movzx eax, map_y_size
+	cmp esi, eax
+	jne outer_loop
+end_outer:
+	ret
+draw_map	endp
+
+wall_hit_test	proc
+; check will next head hit the wall.
+; use next_head_x, next_head_y as cordinates.
+; result is store in **eax**, 1 if hit, otherwise, 0
+	mov ebx, offset game_map
+	mov edi, next_head_x
+	mov esi, next_head_y
+
+	mov eax, esi
+	mul map_x_size
+	add eax, ebx
+	add eax, edi
+	mov dl, [eax]
+
+	cmp dl, 1
+	jne l2
+l1:
+	mov eax, 1		; hit
+	jmp l3	
+l2:
+	mov eax, 0		; not hit
+l3:
+	ret
+wall_hit_test	endp
 
 clear_snake proc
 	push edx
@@ -446,7 +509,8 @@ true:
 change_dir	endp
 
 show_main_screen	proc
-	invoke draw_wall
+	;invoke draw_wall
+	invoke draw_map
 	invoke draw_snake
 	invoke draw_info_panel
 	invoke draw_score
@@ -584,7 +648,12 @@ L1_INC:
 	cmp ecx, head
 	jne L1
 L1_BREAK:
-
+	; check did snake hit the wall?
+	invoke wall_hit_test
+	cmp eax, 1
+	jne L2 
+	mov game_over, TRUE
+L2:
 	ret
 check_game_over	endp
 
@@ -660,11 +729,21 @@ l_done:
 	ret
 launch_welcome	endp
 
+read_map_from_file	proc
+	pusha
+	invoke crt_fopen, offset map_path, offset read_mode
+	mov map_file, eax
+	invoke crt_fread, offset game_map, 1, WALL_MAX_Y*WALL_MAX_X, map_file
+	popa
+	ret
+read_map_from_file	endp
+
 main proc
 	invoke init_console
 	invoke launch_welcome
 	cmp game_quit, TRUE
 	je  try_quit
+	invoke read_map_from_file
 main_loop:
 	invoke launch_game
 	cmp game_over, TRUE
