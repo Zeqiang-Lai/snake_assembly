@@ -4,7 +4,7 @@ option casemap:none
 
 include		masm32rt.inc
 
-INFO_ORIGIN_X	EQU 85
+INFO_ORIGIN_X	EQU 89
 INFO_ORIGIN_Y	EQU 0
 
 WALL_MAX_X	EQU	80
@@ -44,6 +44,8 @@ b_snake			byte	'*'
 b_snake_empty	byte	' '
 b_snake_real	byte	'*'
 b_food			byte	'$'
+b_logo			byte	'*'
+b_box			byte	'+'
 
 msg_game_over	byte	"Game over", 0
 formatD			byte	"%d", 0
@@ -53,9 +55,9 @@ game_map		db	WALL_MAX_X*WALL_MAX_Y dup(0)
 map_x_size		dd	WALL_MAX_X
 map_y_size		dd  WALL_MAX_Y
 
-welcome_map		db  120*29 dup(0)
-welcome_x_size	dd	120
-welcome_y_size	dd	29
+screen_map		db  120*29 dup(0)
+screen_x_size	dd	120
+screen_y_size	dd	29
 
 ; model
 snake_x			dd	MAX_LEN dup(0)
@@ -84,6 +86,8 @@ game_quit	db	FALSE
 map_file		DWORD	?
 game_map_path		byte	"map1.txt", 0
 welcome_map_path	byte	"welcome.txt", 0
+logo_map_path		byte	"logo.txt", 0
+info_box_map_path	byte	"info_box.txt", 0
 read_mode		byte	"rb", 0
 
 key			dd		?				; store the current pressed key.
@@ -146,7 +150,7 @@ draw_score	proc
 ; we seperate this procedure from draw_info_panel
 ; to get better performance.
 ; this procedure will be called from refresh_ui as well.
-	invoke locate, INFO_ORIGIN_X+20, INFO_ORIGIN_Y+5
+	invoke locate, INFO_ORIGIN_X+20, INFO_ORIGIN_Y+12
 	invoke crt_printf, offset formatD, score
 	ret
 draw_score	endp
@@ -155,38 +159,12 @@ draw_speed	proc
 ; we seperate this procedure from draw_info_panel
 ; to get better performance.
 ; this procedure will be called from refresh_ui as well.
-	invoke locate, INFO_ORIGIN_X+21, INFO_ORIGIN_Y+8
+	invoke locate, INFO_ORIGIN_X+20, INFO_ORIGIN_Y+14
 	invoke crt_printf, offset formatD, speed
 	ret
 draw_speed	endp
 
-draw_info_panel	proc
-	pusha
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y
-	print "SNAKE", 13, 10
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+5
-	print "Current Score: ", 13, 10
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+6
-	print "Target  Score: ", 13, 10
-
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+8
-	print "Current  Speed: ", 13, 10
-
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+15
-	print "Control: ", 13, 10
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+16
-	print "ESC:     quit the game", 13, 10
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+17
-	print "Space:  pause the game", 13, 10
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+18
-	print "wasd: movement control", 13, 10
-	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+19
-	print "+-:      speed control", 13, 10
-	popa
-	ret
-draw_info_panel endp
-
-draw_map	proc	map_array:DWORD, size_x:DWORD, size_y:DWORD
+draw_map	proc	map_array:DWORD, size_x:DWORD, size_y:DWORD, block:BYTE
 	mov ebx, map_array
 	xor esi, esi
 outer_loop:
@@ -200,7 +178,7 @@ inner_loop:
 	cmp dl, 1
 	jne l1
 	invoke locate, edi, esi
-	invoke print_wall
+	invoke crt_putchar, block
 l1:
 	inc edi
 	mov eax, size_x
@@ -226,13 +204,43 @@ read_map_from_file	proc map_path:DWORD, map_array:DWORD, size_x:DWORD, size_y:DW
 	ret
 read_map_from_file	endp
 
-wall_hit_test	proc
+draw_info_panel	proc
+	pusha
+	invoke read_map_from_file, offset logo_map_path, offset screen_map, screen_x_size, screen_y_size
+	invoke draw_map, offset screen_map, screen_x_size, screen_y_size, b_logo
+
+	invoke read_map_from_file, offset info_box_map_path, offset screen_map, screen_x_size, screen_y_size
+	invoke draw_map, offset screen_map, screen_x_size, screen_y_size, b_box
+
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+12
+	print "Current Score: ", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+13
+	print "Target  Score: ", 13, 10
+
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+14
+	print "Current Speed: ", 13, 10
+
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+20
+	print "Control: ", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+22
+	print "ESC:     quit the game", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+23
+	print "Space:  pause the game", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+24
+	print "wasd: movement control", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+25
+	print "+-:      speed control", 13, 10
+	popa
+	ret
+draw_info_panel endp
+
+wall_hit_test	proc pos_x:DWORD, pos_y:DWORD
 ; check will next head hit the wall.
 ; use next_head_x, next_head_y as cordinates.
 ; result is store in **eax**, 1 if hit, otherwise, 0
 	mov ebx, offset game_map
-	mov edi, next_head_x
-	mov esi, next_head_y
+	mov edi, pos_x
+	mov esi, pos_y
 
 	mov eax, esi
 	mul map_x_size
@@ -496,7 +504,7 @@ true:
 change_dir	endp
 
 show_main_screen	proc
-	invoke draw_map, offset game_map, map_x_size, map_y_size
+	invoke draw_map, offset game_map, map_x_size, map_y_size, b_wall
 	invoke draw_snake
 	invoke draw_info_panel
 	invoke draw_score
@@ -521,8 +529,8 @@ show_game_quit_screen proc
 show_game_quit_screen endp
 
 show_welcome_screen	proc
-	invoke read_map_from_file, offset welcome_map_path, offset welcome_map, welcome_x_size, welcome_y_size
-	invoke draw_map, offset welcome_map, welcome_x_size, welcome_y_size
+	invoke read_map_from_file, offset welcome_map_path, offset screen_map, screen_x_size, screen_y_size
+	invoke draw_map, offset screen_map, screen_x_size, screen_y_size, b_wall
 	;invoke locate, 55, 11
 	;print "SNAKE GAME", 13, 10
 
@@ -638,7 +646,7 @@ L1_INC:
 	jne L1
 L1_BREAK:
 	; check did snake hit the wall?
-	invoke wall_hit_test
+	invoke wall_hit_test, next_head_x, next_head_y
 	cmp eax, 1
 	jne L2 
 	mov game_over, TRUE
