@@ -12,12 +12,16 @@ WALL_MAX_Y	EQU 20
 
 MAX_LEN		EQU 100		; max length of snake
 
-DEFAULT_SPEED		EQU 120
 DEFAULT_DIR			EQU 'd'
 DEFAULT_LAST_DIR	EQU 's'
 DEFAULT_LEN			EQU 3
 DEFAULT_FOOD_X		EQU	5
 DEFAULT_FOOD_Y		EQU	14
+
+DEFAULT_SPEED		EQU 125
+FASTEST_SPEED		EQU 25
+SLOWEST_SPEED		EQU 500
+SPEED_INCREMENT		EQU 25
 
 TRUE	EQU	1
 FALSE	EQU 0
@@ -30,6 +34,8 @@ KPAUSE	EQU	' '
 KESC	EQU 27
 KYES	EQU 'y'
 KNO		EQU	'n'
+KFASTER	EQU	'='
+KSLOWER	EQU '-'
 
 .data
 ; UI
@@ -160,6 +166,15 @@ draw_score	proc
 	ret
 draw_score	endp
 
+draw_speed	proc
+; we seperate this procedure from draw_info_panel
+; to get better performance.
+; this procedure will be called from refresh_ui as well.
+	invoke locate, INFO_ORIGIN_X+21, INFO_ORIGIN_Y+8
+	invoke crt_printf, offset formatD, speed
+	ret
+draw_speed	endp
+
 draw_info_panel	proc
 	pusha
 	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y
@@ -169,6 +184,9 @@ draw_info_panel	proc
 	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+6
 	print "Target  Score: ", 13, 10
 
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+8
+	print "Current  Speed: ", 13, 10
+
 	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+15
 	print "Control: ", 13, 10
 	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+16
@@ -177,6 +195,8 @@ draw_info_panel	proc
 	print "Space:  pause the game", 13, 10
 	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+18
 	print "wasd: movement control", 13, 10
+	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+19
+	print "+-:      speed control", 13, 10
 	popa
 	ret
 draw_info_panel endp
@@ -483,7 +503,8 @@ on_key_pressed	proc
 ; 1. Change direction	-- w,a,s,d
 ; 2. Quit the game		-- ESC
 ; 3. Pause the game		-- space
-; 4. Do nothing			-- any other key
+; 4. speed control		-- +-
+; 5. Do nothing			-- any other key
 	cmp key, UP
 	je	on_dir
 	cmp key, LEFT
@@ -494,6 +515,10 @@ on_key_pressed	proc
 	je	on_dir
 	cmp key, KESC
 	je on_quit
+	cmp key, KFASTER
+	je on_faster
+	cmp key, KSLOWER
+	je on_slower
 	jmp other
 on_dir:
 	mov eax, key
@@ -502,6 +527,16 @@ on_dir:
 	jmp other
 on_quit:
 	invoke launch_game_quit
+	jmp other
+on_faster:
+	cmp speed, FASTEST_SPEED
+	je other
+	sub speed, SPEED_INCREMENT
+	jmp other
+on_slower:
+	cmp speed, SLOWEST_SPEED
+	je other
+	add speed, SPEED_INCREMENT
 other:
 	;do nothing
 	ret
@@ -511,6 +546,7 @@ refresh_ui	proc
 	invoke draw_snake
 	invoke draw_food
 	invoke draw_score
+	invoke draw_speed
 	ret
 refresh_ui	endp
 
