@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="css/main.css">
+    <script src="js/main.js" defer></script>
+    <link href="https://fonts.googleapis.com/css?family=Lato:400,700|Lora" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.2/css/all.css" integrity="sha384-oS3vJWv+0UjzBfQzYUhtDYW+Pj2yciDJxpsK1OYPAYjqT085Qq/1cq5FLXAZQ7Ay" crossorigin="anonymous">
+    <link rel="icon" type="image/png" href="favicon.png" sizes="32x32" />
+    <meta name="snake" content="snake game" />
+    <title>Snake Game</title>
+  </head>
+  <body>
+<!-- START OF: Header 24 =====-->
+<header class="header-24 js-scroll-this-box">
+  <!-- START OF: Nav 2 =====-->
+  <nav class="nav-02">
+    <div class="container container--large">
+      <div class="nav-02__box">
+        <div class="nav-02__logo"><a class="nav-02__link" href="javascript:void(0);" target="_blank">
+            <!--You can use image logo:--><img class="nav-02__logo_img" src="img/snake_logo.svg" alt="Logo"/>
+            <!--Or uncomment this <span> to have a word-logo.-->
+            <!--span.nav-02__logo_text.white-text
+            | Unicorn
+            
+            --></a></div>
+        <div class="nav-02__links js-menu">
+          <ul class="nav-02__list">
+            <li class="nav-02__item"><a class="button js-scroll-down  button--black-outline  button--empty " href="#features" ><span>Features</span></a>
+            </li>
+            <li class="nav-02__item"><a class="button js-scroll-down  button--black-outline  button--empty " href="#doc"><span>Documentation</span></a>
+            </li>
+            <li class="nav-02__item">
+              <a class="button   button--black-outline " href="https://github.com/Zeqiang-Lai/snake_assembly" target="_blank">
+                <i class="fab fa-github"></i>
+              <span>GitHub</span>
+            </a>
+            </li>
+          </ul>
+          <div class="nav-02__burger">
+            <button class="burger burger--black js-open-menu" type="button">
+              <div class="burger__box">
+                <div class="burger__inner"></div>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+  <!-- ===== END OF: Nav 2-->
+  <div class="container container--large header-24__container">
+    <div class="header-24__left">
+      <div class="header-24__left_content">
+        <h1 class="heading heading--accent header-24__heading">Snake Game</h1>
+        <p class="header-24__text">This is a console version of the classical game Snake. It is written in x86 assembly and completely open source. Try it for free.</p>
+        <div class="header-24__cta_box">
+          <div class="buttons-set">
+            <ul class="buttons-set__list">
+           
+              <li class="buttons-set__item"><a class="button button--white-bg  button--vendor-logo " href="https://github.com/Zeqiang-Lai/snake_assembly/archive/v0.9.zip">
+                    <div class="button__system_icon"><svg viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg"><title>microsoft-windows-22</title><g id="Symbols" fill="none" fill-rule="evenodd"><g id="Button--accent-windows" transform="translate(-14 -13)" fill-rule="nonzero" fill="#FFF"><g id="Button"><g id="microsoft-windows-22" transform="translate(14 13)"><path d="M0 2.122l6.106-.831.003 5.89-6.104.034L0 2.122zm6.104 5.737l.004 5.895-6.103-.839V7.82l6.098.039zm.74-6.678L14.94 0v7.105l-8.096.065V1.181zm8.097 6.734l-.002 7.074-8.095-1.144-.012-5.944 8.11.014z" id="Shape"/></g></g></g></g></svg></div><span>Get Beta For Windows</span></a>
+              </li>
+            </ul>
+           
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-24__right">
+      <!-- <img class="header-24__img" src="demo.png"/> -->
+      <video class="screen" id="screen" autoplay="" loop="" muted="true" playsinline="" width="530" height="330" poster="https://d1uuw6svr2zjy1.cloudfront.net/img/header_poster.jpg">
+				<source src="img/header.mp4" type="video/mp4">
+			</video>
+    </div>
+  </div>
+</header>
+<!-- ===== END OF: Header 24-->
+
+<!-- START OF: Slider 01 =====-->
+<div class="slider-01" id="features">
+    <div class="container container--small">
+      <div class="slider-01__title_box">
+        <h1 class="heading">Different Maps, Different Joy.</h1>
+        <p>We have made a number of different maps for you. But the game also supports customized maps, feel free to refer to the guide below and make your own ones.</p>
+      </div>
+    </div>
+    <div class="container slider-01__container">
+      <div class="slider">
+        <div class="slider__arrow slider__arrow--prev">
+          <button class="circle-button js-prev-arrow circle-button--icon circle-button--light-blue-bg" type="button"><span class="icon"><svg width="24" height="17" viewBox="0 0 24 17" xmlns="http://www.w3.org/2000/svg"><g id="styleguide" fill="none" fill-rule="evenodd"><g id="Unicorn-Styleguide" transform="translate(-121 -2006)" fill-rule="nonzero" fill="#00396B"><g id="Icons" transform="translate(55 1963)"><g id="arrow-pointing-to-right" transform="translate(66 43)"><path d="M23.673 7.688L16.531.336a1.094 1.094 0 0 0-1.578 0 1.173 1.173 0 0 0 0 1.625l5.237 5.39H1.116C.5 7.351 0 7.866 0 8.5s.5 1.149 1.116 1.149H20.19l-5.237 5.39a1.173 1.173 0 0 0 0 1.625 1.097 1.097 0 0 0 1.578 0l7.142-7.352a1.173 1.173 0 0 0 0-1.624z" id="Shape" transform="matrix(-1 0 0 1 24 0)"/></g></g></g></g></svg></span>
+          </button>
+        </div>
+        <div class="slider__arrow slider__arrow--next">
+          <button class="circle-button js-next-arrow circle-button--icon circle-button--light-blue-bg" type="button"><span class="icon"><svg viewBox="0 0 13 10" xmlns="http://www.w3.org/2000/svg"><path d="M12.823 4.164L8.954.182a.592.592 0 0 0-.854 0 .635.635 0 0 0 0 .88l2.836 2.92H.604A.614.614 0 0 0 0 4.604c0 .344.27.622.604.622h10.332L8.1 8.146a.635.635 0 0 0 0 .88.594.594 0 0 0 .854 0l3.869-3.982a.635.635 0 0 0 0-.88z" fill-rule="nonzero" fill="#00396B"/></svg></span>
+          </button>
+        </div>
+        <ul class="slider__box js-slider" data-slider-config="{&quot;dots&quot;: true, &quot;infinite&quot;: true, &quot;speed&quot;: 300, &quot;fade&quot;: false, &quot;cssEase&quot;: &quot;ease&quot;, &quot;adaptiveHeight&quot;: false, &quot;lazyLoad&quot;: &quot;ondemand&quot;}">
+          <!-- <li class="slider__item"><img class="slider__img" src="https://unicornplatform.com/app/img/screenshots/dashboard-concept.png"/></li> -->
+          <!-- <li class="slider__item"><img class="slider__img" src="https://unicornplatform.com/app/img/screenshots/dashboard-concept-2.png"/></li> -->
+          <!-- <li class="slider__item"><img class="slider__img" src="https://unicornplatform.com/app/img/screenshots/dashboard-concept-3.png"/></li> -->
+          <!-- <li class="slider__item"><img class="slider__img" src="https://unicornplatform.com/app/img/screenshots/dashboard-concept-4.png"/></li> -->
+        </ul>
+      </div>
+    </div>
+  </div>
+  <!-- ===== END OF: Slider 01-->
+  <!-- START OF: Links 02 =====-->
+  <div class="links-02" id="doc">
+    <div class="container container--small">
+      <div class="title-box title-box--center">
+        <h2 class="heading">Documentation</h2>
+        <!-- <p class="title-box__text">Try warming chicken breasts pie enameled with salad cream.</p> -->
+      </div>
+    </div>
+    <div class="container container--small">
+      <ul class="links-02__list">
+        <li class="links-02__item"><a class="links-02__link" href="javascript:void(0);" target="_blank">A Guide to Make Your own Maps</a></li>
+        <li class="links-02__item"><a class="links-02__link" href="javascript:void(0);" target="_blank">How to Run the Game from Command Line</a></li>
+        <li class="links-02__item"><a class="links-02__link" href="javascript:void(0);" target="_blank">Frequently Asked Questions</a></li>
+      </ul>
+      <ul class="links-02__list">
+        <li class="links-02__item"><a class="links-02__link" href="javascript:void(0);" target="_blank">Design and Implementation Details</a></li>
+      </ul>
+    </div>
+  </div>
+  <!-- ===== END OF: Links 02-->
+
+<!-- START OF: Button 22 =====-->
+<div class="cta_button-22">
+  <div class="container container--small">
+    <div class="cta_button-22__button_box">
+      <a class="button js-scroll-down button--white-bg  button--vendor-logo " href="javascript:void(0);">
+          <div class="button__system_icon"><svg viewBox="0 0 15 15" xmlns="http://www.w3.org/2000/svg"><title>microsoft-windows-22</title><g id="Symbols" fill="none" fill-rule="evenodd"><g id="Button--accent-windows" transform="translate(-14 -13)" fill-rule="nonzero" fill="#FFF"><g id="Button"><g id="microsoft-windows-22" transform="translate(14 13)"><path d="M0 2.122l6.106-.831.003 5.89-6.104.034L0 2.122zm6.104 5.737l.004 5.895-6.103-.839V7.82l6.098.039zm.74-6.678L14.94 0v7.105l-8.096.065V1.181zm8.097 6.734l-.002 7.074-8.095-1.144-.012-5.944 8.11.014z" id="Shape"/></g></g></g></g></svg></div><span>Get Beta For Windows</span></a>
+      <!-- <div class="cta_button-22__text">Your<img class="emoji  " src="img/emoji/map.png" alt="Emoji"/>in the world of data -->
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== END OF: Button 22-->
+
+<!-- START OF: Footer 01 =====-->
+<div class="footer-01">
+  <div class="container">
+    <div class="footer-01__wrapper"><a class="footer-01__logo_link" href="javascript:void(0);"><img class="footer-01__logo" src="img/snake_logo.svg"/></a>
+    
+      <div class="footer-02__text">&copy; 2019&nbsp;Zeqiang-Lai.
+        All rights reserved.
+      </div>
+
+      <ul class="footer-01__list">
+        <li class="footer-01__item"><a class="footer-01__link footer-01__link--black" href="https://github.com/Zeqiang-Lai" target="_blank">Github</a></li>
+
+      </ul>
+    </div>
+  </div>
+</div>
+<!-- ===== END OF: Footer 01-->
+   
+  </body>
+</html>
