@@ -84,10 +84,10 @@ game_quit	db	FALSE
 
 ; system
 map_file		DWORD	?
-game_map_path		byte	"map1.txt", 0
-welcome_map_path	byte	"welcome.txt", 0
-logo_map_path		byte	"logo.txt", 0
-info_box_map_path	byte	"info_box.txt", 0
+game_map_path		byte	"maps/map1", 0
+welcome_map_path	byte	"UI/welcome", 0
+logo_map_path		byte	"UI/logo", 0
+info_box_map_path	byte	"UI/info_box", 0
 read_mode		byte	"rb", 0
 
 key			dd		?				; store the current pressed key.
@@ -209,8 +209,8 @@ draw_info_panel	proc
 	invoke read_map_from_file, offset logo_map_path, offset screen_map, screen_x_size, screen_y_size
 	invoke draw_map, offset screen_map, screen_x_size, screen_y_size, b_logo
 
-	invoke read_map_from_file, offset info_box_map_path, offset screen_map, screen_x_size, screen_y_size
-	invoke draw_map, offset screen_map, screen_x_size, screen_y_size, b_box
+	;invoke read_map_from_file, offset info_box_map_path, offset screen_map, screen_x_size, screen_y_size
+	;invoke draw_map, offset screen_map, screen_x_size, screen_y_size, b_box
 
 	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+12
 	print "Current Score: ", 13, 10
@@ -230,6 +230,9 @@ draw_info_panel	proc
 	print "wasd: movement control", 13, 10
 	invoke locate, INFO_ORIGIN_X, INFO_ORIGIN_Y+25
 	print "+-:      speed control", 13, 10
+
+	invoke locate, INFO_ORIGIN_X+6, INFO_ORIGIN_Y+28
+	print "Made by Ze", 13, 10
 	popa
 	ret
 draw_info_panel endp
@@ -279,6 +282,7 @@ compute_food_loc endp
 
 init_console	proc
 	pusha
+	cls
 	SetConsoleCaption "Snake"
 	invoke GetStdHandle, STD_OUTPUT_HANDLE
 	mov hOutPut, eax
