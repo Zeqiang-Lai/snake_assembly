@@ -5,7 +5,9 @@
 
 .screen {
     max-width: 100%;
-    height: auto;
+    /* height: auto; */
+    width: 470;
+    height: 264;
     box-shadow: 0 5px 20px 0 rgba(0,0,0,.35);
     border-radius: 3px;
 }
