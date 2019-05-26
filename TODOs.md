@@ -49,5 +49,6 @@ not completely listed.
 
 
 
-### 
+### Bugs
 
+- [ ] welcome screen is not clear when run in PowerShell.
