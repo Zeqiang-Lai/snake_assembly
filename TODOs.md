@@ -2,15 +2,17 @@
 
 not completely listed.
 
+- [x] run from command line.
+
 ### UI
 
 - [x] draw wall
 - [x] draw snake
-- [ ] welcome screen 
+- [x] welcome screen 
   - [x] basic
-- [ ] game_over screen 
+- [x] game_over screen 
   - [x] basic
-- [ ] info panel
+- [x] info panel
   - [x] basic
 
 ### Move
@@ -32,5 +34,20 @@ not completely listed.
 - [x] create a map image
 - [x] convert bit png to map
 - [x] hit test
+- [ ] optimize map size.
+- [ ] map selection.
+
+### Robot Enemy
+
+- [ ] basic 
+
+### Bonus
+
+- [ ] hidden map?
 
 ### Color
+
+
+
+### 
+
