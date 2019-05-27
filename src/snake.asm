@@ -248,69 +248,31 @@ clear_snake proc
 	ret
 clear_snake endp
 
-; TODO:
-compute_food_loc proc
-; the location of food should not be outside the wall.
-	inc food_x
-	ret
-compute_food_loc endp
-
-init_console	proc
+refresh_food_ordinate proc
+;refresh food_x,food_y
+	local _st:SYSTEMTIME
 	pusha
-	cls
-	SetConsoleCaption "Snake"
-	invoke GetStdHandle, STD_OUTPUT_HANDLE
-	mov hOutPut, eax
-	;Turn off the cursor
-	invoke GetConsoleCursorInfo, hOutPut, ADDR CCI
-	mov CCI.bVisible, 0
-	invoke SetConsoleCursorInfo, hOutPut, ADDR CCI
+	l1:
+	invoke GetSystemTime ,addr _st
+	movzx eax, SYSTEMTIME.wMilliseconds[_st]
+	invoke crt_srand,eax
+	invoke crt_rand
+	and eax,0FFh
+	cmp eax,WALL_MAX_X
+	jge l1
+	mov food_x,eax
+	l2:
+	invoke GetSystemTime ,addr _st
+	movzx eax, SYSTEMTIME.wMilliseconds[_st]
+	invoke crt_srand,eax
+	invoke crt_rand
+	and eax,0FFh
+	cmp eax,WALL_MAX_Y
+	jge l2
+	mov food_y,eax
 	popa
 	ret
-init_console	endp
-
-init_snake proc
-	pusha
-	mov snake_len, DEFAULT_LEN
-
-	mov edi, offset snake_x
-	mov esi, offset snake_x_init
-	xor ecx, ecx
-L1:
-	mov edx, [esi + ecx*4]
-	mov [edi + ecx*4], edx
-	inc ecx
-	cmp ecx, snake_len
-	jne L1 
-
-	mov edi, offset snake_y
-	mov esi, offset snake_y_init
-	xor ecx, ecx
-L2:
-	mov edx, [esi + ecx*4]
-	mov [edi + ecx*4], edx
-	inc ecx
-	cmp ecx, snake_len
-	jne L2
-
-	popa
-	ret
-init_snake endp
-
-init_food	proc
-	invoke compute_food_loc
-	invoke draw_food
-init_food	endp
-
-init_setting proc
-	mov dir,		DEFAULT_DIR
-	mov last_dir,	DEFAULT_LAST_DIR
-	mov speed,		DEFAULT_SPEED
-	mov game_over,	FALSE
-	mov game_pause,	FALSE
-	mov score,		0
-	ret
-init_setting endp
+refresh_food_ordinate endp
 
 wall_hit_test	proc pos_x:DWORD, pos_y:DWORD
 ; check will next head hit the wall.
@@ -368,6 +330,80 @@ L1_INC:
 L1_BREAK:
 	ret
 snake_hit_test	endp
+
+compute_food_loc proc
+; the location of food should not be outside the wall.
+	pusha
+l1:
+	invoke refresh_food_ordinate
+	invoke snake_hit_test, food_x,food_y
+	cmp eax,TRUE
+	je l1
+	invoke wall_hit_test,food_x,food_y
+	cmp eax,TRUE
+	je l1
+	popa
+	ret
+compute_food_loc endp
+
+init_console	proc
+	pusha
+	cls
+	SetConsoleCaption "Snake"
+	invoke GetStdHandle, STD_OUTPUT_HANDLE
+	mov hOutPut, eax
+	;Turn off the cursor
+	invoke GetConsoleCursorInfo, hOutPut, ADDR CCI
+	mov CCI.bVisible, 0
+	invoke SetConsoleCursorInfo, hOutPut, ADDR CCI
+	popa
+	ret
+init_console	endp
+
+init_snake proc
+	pusha
+	mov snake_len, DEFAULT_LEN
+
+	mov edi, offset snake_x
+	mov esi, offset snake_x_init
+	xor ecx, ecx
+L1:
+	mov edx, [esi + ecx*4]
+	mov [edi + ecx*4], edx
+	inc ecx
+	cmp ecx, snake_len
+	jne L1 
+
+	mov edi, offset snake_y
+	mov esi, offset snake_y_init
+	xor ecx, ecx
+L2:
+	mov edx, [esi + ecx*4]
+	mov [edi + ecx*4], edx
+	inc ecx
+	cmp ecx, snake_len
+	jne L2
+
+	popa
+	ret
+init_snake endp
+
+init_food	proc
+	;mov food_x, DEFAULT_FOOD_X
+	;mov food_y, DEFAULT_FOOD_Y
+	invoke compute_food_loc
+	invoke draw_food
+init_food	endp
+
+init_setting proc
+	mov dir,		DEFAULT_DIR
+	mov last_dir,	DEFAULT_LAST_DIR
+	mov speed,		DEFAULT_SPEED
+	mov game_over,	FALSE
+	mov game_pause,	FALSE
+	mov score,		0
+	ret
+init_setting endp
 
 check_game_over	proc
 ; game would be over, under these situation:
