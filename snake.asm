@@ -237,31 +237,6 @@ draw_info_panel	proc
 	ret
 draw_info_panel endp
 
-wall_hit_test	proc pos_x:DWORD, pos_y:DWORD
-; check will next head hit the wall.
-; use next_head_x, next_head_y as cordinates.
-; result is store in **eax**, 1 if hit, otherwise, 0
-	mov ebx, offset game_map
-	mov edi, pos_x
-	mov esi, pos_y
-
-	mov eax, esi
-	mul map_x_size
-	add eax, ebx
-	add eax, edi
-	mov dl, [eax]
-
-	cmp dl, 1
-	jne l2
-l1:
-	mov eax, 1		; hit
-	jmp l3	
-l2:
-	mov eax, 0		; not hit
-l3:
-	ret
-wall_hit_test	endp
-
 clear_snake proc
 	push edx
 	mov dl, b_snake_empty
@@ -336,6 +311,91 @@ init_setting proc
 	mov score,		0
 	ret
 init_setting endp
+
+wall_hit_test	proc pos_x:DWORD, pos_y:DWORD
+; check will next head hit the wall.
+; use next_head_x, next_head_y as cordinates.
+; result is store in **eax**, TRUE if hit, otherwise, FALSE
+	mov ebx, offset game_map
+	mov edi, pos_x
+	mov esi, pos_y
+
+	mov eax, esi
+	mul map_x_size
+	add eax, ebx
+	add eax, edi
+	mov dl, [eax]
+
+	cmp dl, 1
+	jne l2
+l1:
+	mov eax, TRUE		; hit
+	jmp l3	
+l2:
+	mov eax, FALSE		; not hit
+l3:
+	ret
+wall_hit_test	endp
+
+snake_hit_test	proc pos_x:DWORD, pos_y:DWORD
+; check will next head hit the snake itself.
+; use next_head_x, next_head_y as cordinates.
+; result is store in **eax**, TRUE if hit, otherwise, FALSE
+	local head:dword
+	mov edx, snake_len
+	mov head, edx
+	dec head
+
+	; check did snake eat itself?
+	mov edi, offset snake_x
+	mov esi, offset snake_y	
+
+	mov eax, FALSE
+	xor ecx, ecx
+L1:
+	mov edx, [edi + ecx*4]
+	cmp edx, pos_x
+	jne L1_INC
+	mov edx, [esi + ecx*4]
+	cmp edx, pos_y
+	jne L1_INC
+	mov eax, TRUE
+	jmp L1_BREAK
+L1_INC:
+	inc ecx
+	cmp ecx, head
+	jne L1
+L1_BREAK:
+	ret
+snake_hit_test	endp
+
+check_game_over	proc
+; game would be over, under these situation:
+; 1. snake eat itself
+; 2. hit the wall(if the wall is solid)
+; 3. eat the bad food(future work)[optional]
+	
+	local head:dword
+	pusha
+
+	mov edx, snake_len
+	mov head, edx
+	dec head
+
+	; check did snake eat itself?
+	invoke snake_hit_test, next_head_x, next_head_y
+	cmp eax, TRUE
+	je L1
+	; check did snake hit the wall?
+	invoke wall_hit_test, next_head_x, next_head_y
+	cmp eax, TRUE
+	je L1 
+	jmp L2
+L1:
+	mov game_over, TRUE
+L2: 
+	ret
+check_game_over	endp
 
 compute_next_head proc
 	local head:dword
@@ -616,47 +676,6 @@ refresh_ui	proc
 	invoke draw_speed
 	ret
 refresh_ui	endp
-
-check_game_over	proc
-; game would be over, under these situation:
-; 1. snake eat itself
-; 2. hit the wall(if the wall is solid)
-; 3. eat the bad food(future work)[optional]
-	
-	local head:dword
-	pusha
-
-	mov edx, snake_len
-	mov head, edx
-	dec head
-
-	; check did snake eat itself?
-	mov edi, offset snake_x
-	mov esi, offset snake_y	
-
-	xor ecx, ecx
-L1:
-	mov edx, [edi + ecx*4]
-	cmp edx, next_head_x
-	jne L1_INC
-	mov edx, [esi + ecx*4]
-	cmp edx, next_head_y
-	jne L1_INC
-	mov game_over, TRUE
-	jmp L1_BREAK
-L1_INC:
-	inc ecx
-	cmp ecx, head
-	jne L1
-L1_BREAK:
-	; check did snake hit the wall?
-	invoke wall_hit_test, next_head_x, next_head_y
-	cmp eax, 1
-	jne L2 
-	mov game_over, TRUE
-L2:
-	ret
-check_game_over	endp
 
 start_game	proc
 	game_loop:
