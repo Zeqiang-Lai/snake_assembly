@@ -37,6 +37,11 @@ KNO		EQU	'n'
 KFASTER	EQU	'='
 KSLOWER	EQU '-'
 
+; map selection 
+upper_bound			equ	13
+lower_bound			equ	16
+start_bound				equ	14
+
 .data
 ; UI
 b_wall			byte	'#'
@@ -49,6 +54,21 @@ b_box			byte	'+'
 
 msg_game_over	byte	"Game over", 0
 formatD			byte	"%d", 0
+
+; map selection 
+optional_map1		byte	'map1',0
+optional_map2		byte	'map2',0
+optional_map3		byte	'map3',0
+select_arrow			byte	'<--',0
+clear_str					byte	'        ',0
+select_page_title		byte	"Please Select a Map",0		
+optional_map_x		dword	56
+select_arrow_x			dword	61
+optional_map_y		dword	14
+map_number			dword	3
+map_no					dword	?
+control_keyword		dword	?
+
 
 ; map
 game_map		db	WALL_MAX_X*WALL_MAX_Y dup(0)
@@ -88,7 +108,7 @@ game_map_path		byte	"maps/map1", 0
 welcome_map_path	byte	"UI/welcome", 0
 logo_map_path		byte	"UI/logo", 0
 info_box_map_path	byte	"UI/info_box", 0
-read_mode		byte	"rb", 0
+read_mode			byte	"rb", 0
 
 key			dd		?				; store the current pressed key.
 hOutPut		DWORD	?
@@ -785,11 +805,65 @@ l_done:
 	ret
 launch_welcome	endp
 
+launch_map_selection proc
+; launch map selection screen and get user selection, 
+; store it in map_num.
+	cls
+	invoke	locate,51,12
+	invoke	crt_puts,offset select_page_title
+	invoke locate,optional_map_x	,optional_map_y
+	invoke	crt_puts,offset optional_map1
+	inc		optional_map_y
+	invoke locate,optional_map_x,optional_map_y
+	invoke	crt_puts,offset optional_map2
+	inc		optional_map_y
+	invoke locate,optional_map_x	,optional_map_y
+	invoke	crt_puts,offset optional_map3
+	invoke	locate,select_arrow_x,optional_map_y
+	invoke	crt_puts,offset select_arrow
+l1:
+	invoke	crt__getch
+	mov		control_keyword,eax
+	cmp		control_keyword,'s'
+	je			pointer_down
+	cmp		control_keyword,0dh
+	jne		l1
+	mov		eax,optional_map_y
+	sub		eax,upper_bound
+	mov		map_no,eax
+	ret
+pointer_down:
+	invoke	locate,select_arrow_x,optional_map_y
+	invoke	crt_puts,offset clear_str	
+	cmp		optional_map_y,lower_bound
+	je			l2
+	inc		optional_map_y
+	jmp		l3
+l2:
+	mov		optional_map_y,start_bound
+	jmp		l3
+l3:
+	invoke	locate,select_arrow_x,optional_map_y
+	invoke	crt_puts,offset select_arrow
+	jmp		l1
+	ret
+launch_map_selection endp
+
+select_map proc
+; this procedure change default map path to selected map path.
+; use map_no(dword) as the user selection.
+; game_map_path will be modified.
+	
+	ret
+select_map endp
+
 main proc
 	invoke init_console
 	invoke launch_welcome
 	cmp game_quit, TRUE
 	je  try_quit
+	invoke launch_map_selection
+	invoke select_map
 	invoke read_map_from_file, offset game_map_path, offset game_map, WALL_MAX_X, WALL_MAX_Y
 main_loop:
 	invoke launch_game
