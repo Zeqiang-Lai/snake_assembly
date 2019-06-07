@@ -26,21 +26,22 @@ SPEED_INCREMENT		EQU 25
 TRUE	EQU	1
 FALSE	EQU 0
 
-UP		EQU	'w'		
-DOWN	EQU	's'		
-LEFT	EQU	'a'		
-RIGHT	EQU	'd'		
-KPAUSE	EQU	' '
-KESC	EQU 27
-KYES	EQU 'y'
-KNO		EQU	'n'
-KFASTER	EQU	'='
-KSLOWER	EQU '-'
+UP			EQU	'w'		
+DOWN		EQU	's'		
+LEFT		EQU	'a'		
+RIGHT		EQU	'd'		
+KPAUSE		EQU	' '
+KESC		EQU 27
+KYES		EQU 'y'
+KNO			EQU	'n'
+KFASTER		EQU	'='
+KSLOWER		EQU '-'
+KTOGGLE_AI	EQU 'o'
 
 ; map selection 
 upper_bound			equ	13
-lower_bound			equ	16
-start_bound				equ	14
+lower_bound			equ	17
+start_bound			equ	14
 
 .data
 ; UI
@@ -56,17 +57,17 @@ msg_game_over	byte	"Game over", 0
 formatD			byte	"%d", 0
 
 ; map selection 
-optional_map1		byte	'map1',0
-optional_map2		byte	'map2',0
-optional_map3		byte	'map3',0
-select_arrow			byte	'<--',0
-clear_str					byte	'        ',0
-select_page_title		byte	"Please Select a Map",0		
-optional_map_x		dword	56
-select_arrow_x			dword	61
+optional_map1		byte	"Road",0
+optional_map2		byte	"BIT",0
+optional_map3		byte	"Underground",0
+optional_map4		byte	"Maze",0
+select_arrow		byte	'<--',0
+clear_str			byte	'        ',0
+select_page_title	byte	"Please Select a Map",0		
+optional_map_x		dword	52
+select_arrow_x		dword	66
 optional_map_y		dword	14
-map_number			dword	3
-map_no					dword	?
+map_no				dword	?
 control_keyword		dword	?
 
 
@@ -83,8 +84,8 @@ screen_y_size	dd	29
 snake_x			dd	MAX_LEN dup(0)
 snake_y			dd	MAX_LEN dup(0)
 snake_len		dd	DEFAULT_LEN	; length of snake.
-snake_x_init	dd	3,4,5
-snake_y_init	dd	3,3,3
+snake_x_init	dd	1,2,3
+snake_y_init	dd	11,11,11
 
 next_head_x		dd	?	
 next_head_y		dd	?	
@@ -113,6 +114,9 @@ read_mode			byte	"rb", 0
 key			dd		?				; store the current pressed key.
 hOutPut		DWORD	?
 CCI CONSOLE_CURSOR_INFO {}
+
+; ai
+enable_ai	db FALSE
 
 .code
 print_wall proc
@@ -688,6 +692,20 @@ on_key_pressed	proc
 ; 3. Pause the game		-- space
 ; 4. speed control		-- +-
 ; 5. Do nothing			-- any other key
+	cmp key, KTOGGLE_AI
+	je on_ai
+	cmp key, KESC
+	je on_quit
+	cmp key, KFASTER
+	je on_faster
+	cmp key, KSLOWER
+	je on_slower
+	cmp key, KPAUSE
+	je on_pause
+	; we don't compare other key in AI mode.
+	cmp enable_ai, TRUE
+	je other
+
 	cmp key, UP
 	je	on_dir
 	cmp key, LEFT
@@ -696,12 +714,14 @@ on_key_pressed	proc
 	je	on_dir
 	cmp key, RIGHT
 	je	on_dir
-	cmp key, KESC
-	je on_quit
-	cmp key, KFASTER
-	je on_faster
-	cmp key, KSLOWER
-	je on_slower
+	jmp other
+on_pause:
+	cmp byte ptr [game_pause], FALSE
+	je enable_pause
+	mov byte ptr [game_pause], FALSE
+	jmp other
+enable_pause:
+	mov byte ptr [game_pause], TRUE
 	jmp other
 on_dir:
 	mov eax, key
@@ -720,6 +740,14 @@ on_slower:
 	cmp speed, SLOWEST_SPEED
 	je other
 	add speed, SPEED_INCREMENT
+on_ai:
+	cmp byte ptr [enable_ai], TRUE
+	je ldisable
+lenable:
+	mov byte ptr [enable_ai], TRUE
+	jmp other
+ldisable:
+	mov byte ptr [enable_ai], FALSE
 other:
 	;do nothing
 	ret
@@ -733,6 +761,10 @@ refresh_ui	proc
 	ret
 refresh_ui	endp
 
+ai_choose_dir proc
+	ret
+ai_choose_dir endp
+
 start_game	proc
 	game_loop:
 		invoke crt__kbhit
@@ -745,10 +777,17 @@ start_game	proc
 		invoke crt__getch
 		mov key, eax
 		invoke on_key_pressed
-		cmp game_quit, TRUE
+		cmp byte ptr [game_quit], TRUE
 		je end_game
 
+		cmp byte ptr [enable_ai], FALSE
+		je move
+		invoke ai_choose_dir
+
 	move:
+		cmp byte ptr [game_pause], TRUE
+		je game_loop
+
 		invoke compute_next_head
 
 		invoke check_game_over
@@ -809,6 +848,7 @@ launch_map_selection proc
 ; launch map selection screen and get user selection, 
 ; store it in map_num.
 	cls
+	mov dword ptr [optional_map_y], 14
 	invoke	locate,51,12
 	invoke	crt_puts,offset select_page_title
 	invoke locate,optional_map_x	,optional_map_y
@@ -819,6 +859,9 @@ launch_map_selection proc
 	inc		optional_map_y
 	invoke locate,optional_map_x	,optional_map_y
 	invoke	crt_puts,offset optional_map3
+	inc		optional_map_y
+	invoke locate,optional_map_x,optional_map_y
+	invoke	crt_puts,offset optional_map4
 	invoke	locate,select_arrow_x,optional_map_y
 	invoke	crt_puts,offset select_arrow
 l1:
@@ -826,6 +869,8 @@ l1:
 	mov		control_keyword,eax
 	cmp		control_keyword,'s'
 	je			pointer_down
+	cmp		control_keyword,'w'
+	je			pointer_up
 	cmp		control_keyword,0dh
 	jne		l1
 	mov		eax,optional_map_y
@@ -839,6 +884,13 @@ pointer_down:
 	je			l2
 	inc		optional_map_y
 	jmp		l3
+pointer_up:
+	invoke	locate,select_arrow_x,optional_map_y
+	invoke	crt_puts,offset clear_str	
+	cmp		optional_map_y,start_bound
+	je			l4
+	dec		optional_map_y
+	jmp		l3
 l2:
 	mov		optional_map_y,start_bound
 	jmp		l3
@@ -846,6 +898,9 @@ l3:
 	invoke	locate,select_arrow_x,optional_map_y
 	invoke	crt_puts,offset select_arrow
 	jmp		l1
+l4:
+	mov		optional_map_y,lower_bound
+	jmp		l3
 	ret
 launch_map_selection endp
 
@@ -853,7 +908,33 @@ select_map proc
 ; this procedure change default map path to selected map path.
 ; use map_no(dword) as the user selection.
 ; game_map_path will be modified.
+	push eax
 	
+	mov eax, map_no
+	cmp eax,0
+	je l4
+	cmp eax,1
+	je l1
+	cmp eax,2
+	je l2
+	cmp eax,3
+	je l3
+	cmp eax,4
+	je l4
+l1: 
+	mov [game_map_path+8],'1'
+	jmp l5
+l2: 
+	mov [game_map_path+8],'2'
+	jmp l5
+l3: 
+	mov [game_map_path+8],'3'
+	jmp l5
+l4: 
+	mov [game_map_path+8],'4'
+	jmp l5
+l5:
+	pop eax
 	ret
 select_map endp
 
@@ -862,10 +943,10 @@ main proc
 	invoke launch_welcome
 	cmp game_quit, TRUE
 	je  try_quit
+main_loop:
 	invoke launch_map_selection
 	invoke select_map
 	invoke read_map_from_file, offset game_map_path, offset game_map, WALL_MAX_X, WALL_MAX_Y
-main_loop:
 	invoke launch_game
 	cmp game_over, TRUE
 	jne try_quit
