@@ -853,6 +853,8 @@ launch_map_selection proc
 	invoke	crt_puts,offset select_page_title
 	invoke locate,optional_map_x	,optional_map_y
 	invoke	crt_puts,offset optional_map1
+	invoke	locate,select_arrow_x,optional_map_y
+	invoke	crt_puts,offset select_arrow
 	inc		optional_map_y
 	invoke locate,optional_map_x,optional_map_y
 	invoke	crt_puts,offset optional_map2
@@ -862,8 +864,7 @@ launch_map_selection proc
 	inc		optional_map_y
 	invoke locate,optional_map_x,optional_map_y
 	invoke	crt_puts,offset optional_map4
-	invoke	locate,select_arrow_x,optional_map_y
-	invoke	crt_puts,offset select_arrow
+
 l1:
 	invoke	crt__getch
 	mov		control_keyword,eax
