@@ -848,13 +848,11 @@ launch_map_selection proc
 ; launch map selection screen and get user selection, 
 ; store it in map_num.
 	cls
-	mov dword ptr [optional_map_y], 14
+	mov dword ptr optional_map_y, 14
 	invoke	locate,51,12
 	invoke	crt_puts,offset select_page_title
 	invoke locate,optional_map_x	,optional_map_y
 	invoke	crt_puts,offset optional_map1
-	invoke	locate,select_arrow_x,optional_map_y
-	invoke	crt_puts,offset select_arrow
 	inc		optional_map_y
 	invoke locate,optional_map_x,optional_map_y
 	invoke	crt_puts,offset optional_map2
@@ -865,6 +863,8 @@ launch_map_selection proc
 	invoke locate,optional_map_x,optional_map_y
 	invoke	crt_puts,offset optional_map4
 
+	invoke	locate,select_arrow_x,optional_map_y
+	invoke	crt_puts,offset select_arrow
 l1:
 	invoke	crt__getch
 	mov		control_keyword,eax
