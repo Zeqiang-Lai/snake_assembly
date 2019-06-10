@@ -35,11 +35,11 @@ not completely listed.
 - [x] convert bit png to map
 - [x] hit test
 - [ ] optimize map size.
-- [ ] map selection.
+- [x] map selection.
 
 ### Robot Enemy
 
-- [ ] basic 
+- [x] basic 
 
 ### Bonus
 
@@ -51,4 +51,4 @@ not completely listed.
 
 ### Bugs
 
-- [ ] welcome screen is not cleared when run in PowerShell.
+- [x] welcome screen is not cleared when run in PowerShell.
