@@ -15,8 +15,8 @@ MAX_LEN		EQU 100		; max length of snake
 DEFAULT_DIR			EQU 'd'
 DEFAULT_LAST_DIR	EQU 's'
 DEFAULT_LEN			EQU 3
-DEFAULT_FOOD_X		EQU	20
-DEFAULT_FOOD_Y		EQU	3
+DEFAULT_FOOD_X		EQU	0
+DEFAULT_FOOD_Y		EQU	0
 
 DEFAULT_SPEED		EQU 125
 FASTEST_SPEED		EQU 25
@@ -42,6 +42,10 @@ KTOGGLE_AI	EQU 'o'
 upper_bound			equ	13
 lower_bound			equ	17
 start_bound			equ	14
+
+; AI
+Q_LEN	EQU 3000
+INF		EQU 10000
 
 .data
 ; UI
@@ -117,8 +121,32 @@ CCI CONSOLE_CURSOR_INFO {}
 
 ; ai
 enable_ai	db FALSE
+dir_x		db 0,1,0,1
+dir_y		db 1,0,1,0
+
+qx			dw Q_LEN dup(0)
+qy			dw Q_LEN dup(0)
+qhead		dw 0
+qtail		dw 0
+
+dis			dw WALL_MAX_X*WALL_MAX_Y dup(0)
+visit		db WALL_MAX_X*WALL_MAX_Y dup(0)
+
+dir2c		db 's', 'd', 'w', 'a'
+
+tx3		dw 0
+ty3		dw 0
 
 .code
+get_1d_idx proc idx_x:dword, idx_y:dword
+	xor eax, eax
+	mov eax, idx_y
+	mov edx, WALL_MAX_X
+	mul edx
+	add eax, idx_x
+	ret
+get_1d_idx endp
+
 print_wall proc
 	pusha
 	invoke crt_putchar, b_wall
@@ -282,6 +310,8 @@ refresh_food_ordinate proc
 	invoke crt_srand,eax
 	invoke crt_rand
 	and eax,0FFh
+	cmp eax, 0
+	je l1
 	cmp eax,WALL_MAX_X
 	jge l1
 	mov food_x,eax
@@ -291,6 +321,8 @@ refresh_food_ordinate proc
 	invoke crt_srand,eax
 	invoke crt_rand
 	and eax,0FFh
+	cmp eax, 0
+	je l2
 	cmp eax,WALL_MAX_Y
 	jge l2
 	mov food_y,eax
@@ -360,6 +392,7 @@ compute_food_loc proc
 	pusha
 l1:
 	invoke refresh_food_ordinate
+	invoke get_1d_idx, food_x, food_y
 	invoke snake_hit_test, food_x,food_y
 	cmp eax,TRUE
 	je l1
@@ -426,6 +459,7 @@ init_setting proc
 	mov game_over,	FALSE
 	mov game_pause,	FALSE
 	mov score,		0
+	mov enable_ai,	FALSE
 	ret
 init_setting endp
 
@@ -526,6 +560,155 @@ end_move:
 	ret
 compute_next_head endp
 
+ai_init	proc
+	mov word ptr qhead, 0 
+	mov word ptr qtail, 0
+	mov esi, 0
+lfor:
+	cmp esi, WALL_MAX_X*WALL_MAX_Y
+	je lend
+	mov ebx, offset dis
+	mov word ptr [ebx+esi*2], INF
+	mov byte ptr [visit+esi], 0
+	inc esi
+	jmp lfor
+lend:
+	ret
+ai_init endp
+
+ai_compute_path proc
+	local tx:word,ty:word,tx2:word,ty2:word
+
+	invoke ai_init
+	invoke get_1d_idx, food_x, food_y
+	mov ebx, offset dis
+	mov word ptr [ebx+eax*2], 0
+
+	xor esi, esi
+	mov si, qtail
+	mov eax, food_x
+	mov ebx, offset qx
+	mov word ptr [ebx+esi*2], ax
+	mov eax, food_y
+	mov ebx, offset qy
+	mov word ptr [ebx+esi*2], ax
+
+	xor eax, eax
+	mov ax, qtail
+	inc ax
+	xor edx, edx
+	xor ebx, ebx
+	mov bx, Q_LEN
+	div bx
+	mov qtail, dx
+
+	invoke get_1d_idx, food_x, food_y
+	mov byte ptr [visit+eax], 1
+
+l_while:
+	xor eax, eax
+	mov ax, qhead
+	cmp ax, qtail
+	je lend_while
+
+	xor edx, edx
+	mov ebx, offset qx
+	mov dx, word ptr [ebx+eax*2]
+	mov word ptr tx, dx
+	mov ebx, offset qy
+	mov dx, word ptr [ebx+eax*2]
+	mov word ptr ty, dx
+
+	mov esi, 0
+l_for:
+	cmp esi, 4
+	je l_end_for
+	xor edx, edx
+	mov bx, [tx]
+	mov dl, byte ptr [dir_x+esi]
+	cmp esi, 1
+	ja l_negtive1
+	add bx, dx 
+	jmp l1
+l_negtive1:
+	sub bx, dx
+l1:
+	mov word ptr tx2, bx
+	cmp word ptr tx2, WALL_MAX_X
+	jae l_end_if
+
+; ----------------------------
+	xor edx, edx
+	mov bx, [ty]
+	mov dl, byte ptr [dir_y+esi]
+	cmp esi, 1
+	ja l_negtive2
+	add bx, dx
+	jmp l2
+l_negtive2:
+	sub bx, dx
+l2:
+	mov word ptr ty2, bx
+	cmp word ptr ty2, WALL_MAX_Y
+	jae l_end_if
+
+	invoke get_1d_idx, tx2, ty2
+	xor edx, edx
+	mov dl, [game_map+eax]
+	cmp dl, 0
+	jne l_end_if
+
+	xor edx, edx
+	mov dl, [visit+eax]
+	cmp dl, 0
+	jne l_end_if
+
+	mov edi, eax
+	invoke get_1d_idx, tx, ty
+	xor edx, edx
+	mov ebx, offset dis
+	mov dx, [ebx+eax*2]
+	inc dx
+	mov [ebx+edi*2], dx
+
+	xor edi, edi
+	mov di, qtail
+	mov ax, word ptr tx2
+	mov ebx, offset qx
+	mov word ptr [ebx+edi*2], ax
+	mov ax, word ptr ty2
+	mov ebx, offset qy
+	mov word ptr [ebx+edi*2], ax
+
+	xor eax, eax
+	mov ax, qtail
+	inc ax
+	xor edx, edx
+	xor ebx, ebx
+	mov bx, Q_LEN
+	div bx
+	mov qtail, dx
+
+	invoke get_1d_idx, tx2, ty2
+	mov byte ptr [visit+eax], 1
+l_end_if:
+	inc esi
+	jmp l_for
+l_end_for:
+	xor eax, eax
+	mov ax, qhead
+	inc ax
+	xor edx, edx
+	xor ebx, ebx
+	mov bx, Q_LEN
+	div bx
+	mov qhead, dx
+
+	jmp l_while
+lend_while:
+	ret
+ai_compute_path endp
+
 compute_next_loc proc
 	local head:dword
 	pusha 
@@ -581,7 +764,7 @@ ate:
 	inc score
 	; genreate new food
 	invoke compute_food_loc
-
+	
 end_move:
 	popa
 	ret
@@ -762,10 +945,83 @@ refresh_ui	proc
 refresh_ui	endp
 
 ai_choose_dir proc
+	local min_dis:word, tx4:word, ty4:word
+	invoke ai_compute_path
+
+	mov word ptr min_dis, INF
+	mov esi, snake_len
+	dec esi
+	mov edx, [snake_x+esi*4]
+	mov tx4, dx
+	mov edx, [snake_y+esi*4]
+	mov ty4, dx
+
+	mov edi, 0
+	mov esi, 0
+l_for:
+	cmp esi, 4
+	je l_end_for
+
+ ; --------------------------
+	xor edx, edx
+	mov bx, [tx4]
+	mov dl, byte ptr [dir_x+esi]
+	cmp esi, 1
+	ja l_negtive1
+	add bx, dx 
+	jmp l1
+l_negtive1:
+	sub bx, dx
+l1:
+	mov word ptr tx3, bx
+	cmp word ptr tx3, WALL_MAX_X
+	jae l_next
+
+; ----------------------------
+	xor edx, edx
+	mov bx, [ty4]
+	mov dl, byte ptr [dir_y+esi]
+	cmp esi, 1
+	ja l_negtive2
+	add bx, dx
+	jmp l2
+l_negtive2:
+	sub bx, dx
+l2:
+	mov word ptr ty3, bx
+	cmp word ptr ty3, WALL_MAX_Y
+	jae l_next
+	
+	push esi
+	push edi
+	invoke snake_hit_test, tx3, ty3
+	pop edi
+	pop esi
+	cmp eax, TRUE
+	je l_next
+
+	invoke get_1d_idx, tx3, ty3
+	xor edx, edx
+	mov dx, word ptr [dis+eax*2]
+	cmp dx, min_dis
+	jae l_next
+	mov min_dis, dx
+	mov edi, esi
+l_next:
+	inc esi
+	jmp l_for
+l_end_for:
+	xor edx,edx
+	mov dl, [dir2c+edi]
+	mov dir, edx
 	ret
 ai_choose_dir endp
 
 start_game	proc
+	;cmp enable_ai, FALSE
+	;je game_loop
+	;invoke ai_compute_path
+
 	game_loop:
 		invoke crt__kbhit
 		test eax, eax
@@ -779,12 +1035,12 @@ start_game	proc
 		invoke on_key_pressed
 		cmp byte ptr [game_quit], TRUE
 		je end_game
-
+	move:
 		cmp byte ptr [enable_ai], FALSE
-		je move
+		je start_move
 		invoke ai_choose_dir
 
-	move:
+	start_move:
 		cmp byte ptr [game_pause], TRUE
 		je game_loop
 
@@ -816,6 +1072,7 @@ launch_game	proc
 launch_game endp
 
 launch_game_over	proc
+	invoke crt__getch
 	invoke show_game_over_screen
 
 	; wait for user input
