@@ -26,7 +26,7 @@ not completely listed.
 ### Food
 
 - [x] basic
-- [ ] randomly generate
+- [x] randomly generate
 - [x] score system
 
 ### Map
@@ -51,4 +51,4 @@ not completely listed.
 
 ### Bugs
 
-- [ ] welcome screen is not clear when run in PowerShell.
+- [ ] welcome screen is not cleared when run in PowerShell.
